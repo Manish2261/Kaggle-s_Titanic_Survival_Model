@@ -1,0 +1,94 @@
+
+#Kaggle Titanic Competition:
+
+"""In these competition, I was supposed to code a model a ML algorithm which will be swift in regressing out the survival probablity of 
+the passengers having different properties(features) by using the various regression models""" 
+
+#Trainiing Data Exploration and Modeling:
+
+"""These section belongs to the work which is carried on the traipning data specifically """
+
+#Importing the Libraries:
+"""Important libraries which are necessary for data preprocessing and model training and result visualization are being called out."""
+
+import numpy as np                           #For dealing with the data operations
+import pandas as pd                          #For dealing with dataframes and their exploratory operations
+import matplotlib.pyplot as plt              #Useful for Visualization of results
+
+#Importing the datasets:
+data_train = pd.read_csv('train.csv')
+data_train = data_train.drop(labels = ['Ticket','Name','Cabin'],axis = 1)
+data_train['Age'] = data_train['Age'].fillna((data_train['Age'].median()))
+data_train['Embarked'] = data_train['Embarked'].fillna('unknown')
+data_train['Embarked'] = data_train['Embarked'].astype('category')
+x = data_train.iloc[ : ,2:].values
+y = data_train.iloc[ : ,1].values 
+
+
+#Encoding Categorical Classification :
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+ohe = ColumnTransformer(transformers = [('encoding', OneHotEncoder(), [6])], remainder = 'passthrough')
+le = LabelEncoder()
+
+#Over Training data:
+x[ : ,6] = le.fit_transform(x[ : ,6])
+x[ : ,1] = le.fit_transform(x[ : , 1]) 
+
+#Feature Scaling of the Model:
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+x = sc.fit_transform(x)
+
+#Training of the Model:
+from sklearn.svm import SVR
+regressor = SVR(kernel = 'rbf', degree = 3)
+regressor.fit(x,y)
+
+"""
+#Training of the Model:
+from sklearn.ensemble import RandomForestRegressor
+regressor = RandomForestRegressor(n_estimators = 500, random_state = 0)
+regressor.fit(x,y)
+"""
+"""
+#Training of Model:
+from xgboost import XGBClassifier
+regressor = XGBClassifier()
+regressor.fit(x,y)
+"""
+
+
+#Importing the Test Data:
+data_test = pd.read_csv('test.csv')
+data_test = data_test.drop(labels = ['Ticket', 'Name', 'Cabin'], axis = 1)
+data_test['Age'] = data_test['Age'].fillna((data_test['Age'].median()))
+data_test['Fare'] = data_test['Fare'].fillna((data_test['Fare'].median()))
+
+data_test['Embarked'] = data_test['Embarked'].fillna('unknown')
+data_test['Embarked'] = data_test['Embarked'].astype('category')
+x_test = data_test.iloc[ : , 1: ].values
+
+#Encoding categorical Classification:
+#Over Test data
+x_test[ : ,6] = le.fit_transform(x_test[ : ,6])
+x_test[ : ,1] = le.fit_transform(x_test[ : ,1])
+
+#Feature Scaling of the Test Data:
+x_test = sc.fit_transform(x_test)
+
+#Predicting the results:
+y_pred = regressor.predict(x_test)
+for i in range(len(y_pred)):
+    if y_pred[i] > 0.5:
+        y_pred[i] = 1
+    else:
+        y_pred[i] = 0
+testId_s = data_test.iloc[ : ,0].values
+test_predictions = np.concatenate((testId_s.reshape(-1,1), y_pred.reshape(-1,1)),axis = 1)
+
+#np.savetxt('survival_pred.csv',  (test_predictions[ : ,0], test_predictions[ : , 1]), delimiter = ',', header = 'PassengerId' )
+
+#np.savetxt('data.csv', (col1_array, col2_array, col3_array), delimiter=',')
+#Importing the Example Submission:
+data_exam = pd.read_csv('gender_submission.csv')
